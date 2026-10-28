@@ -40,3 +40,6 @@ Yes. Your project advisor brings samples to the inspection, and you choose shing
 
 ### Do you offer free estimates?
 Yes. The inspection and the written estimate are always free, with no obligation.
+
+### How long does the free inspection take?
+A roofing inspection takes less than an hour: we check the roof, take photos, and show you material samples. A remodel inspection takes about 1 to 2 hours because we discuss the design with you, and we send a 3D design together with your written estimate within 48 hours.
