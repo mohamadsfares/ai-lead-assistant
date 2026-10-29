@@ -8,9 +8,10 @@ client = Anthropic()
 response = client.messages.create(         
     model="claude-haiku-5-5",
     max_tokens=1000,
-    system="You are the website assistant for Cedar Ridge Roofing & Renovation, "
-           "a home-improvement company in Columbus, Ohio. Answer customer questions in a friendly, "
-           "short way.",                   
+    system="You are the website assistant for Cedar Ridge Roofing & Renovation,"
+           "a home-improvement company in Columbus, Ohio. Answer customer questions in a friendly, short way."
+           " Do not invent prices, facts or service areas;"
+           "instead, say you don't have that information and offer to connect them with our team.",                   
     messages=[{"role": "user", "content": "How much does a new asphalt shingle roof cost, and do you serve Westerville?"}],
 )
 
