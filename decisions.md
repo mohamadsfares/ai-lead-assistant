@@ -23,3 +23,6 @@ Each entry: what we decided, why, and what we rejected.
 
 ## Open decisions
 - **API hosting:** Render (simple, free) vs. a VPS with Caddy + systemd (closer to the job, ~$5/month). Decide in session 8.
+## D6: Claude Haiku 5.5 for answers (29 Oct 2026)
+- **Why:** fastest and lowest-cost Claude model; the task is answering from provided documents, which doesn't need the most powerful model. The first test call cost a fraction of a cent.
+- **Rejected:** Sonnet/Opus (higher cost and latency, not needed yet). We revisit if the evaluation shows quality problems.

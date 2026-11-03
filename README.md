@@ -16,4 +16,6 @@ Home-improvement companies get website visitors at all hours asking the same que
 - Serve it as a **FastAPI** service (used by an n8n automation in project 4) with a **Streamlit** chat demo
 
 ## Status
-🚧 In progress: session 1 (setup + knowledge base)
+🚧 In progress: session 3 (chunking, embeddings, Supabase)
+
+Done so far: project setup, 7-document knowledge base, secure key handling (.env + Bitwarden), first Claude API call.
