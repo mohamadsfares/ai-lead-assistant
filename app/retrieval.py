@@ -2,7 +2,7 @@ from app.embeddings import embed_texts
 from app.db import supabase
 
 
-def search(question, k=3):
+def search(question, k=5):
     query_vector = embed_texts([question])[0]
     result=supabase.rpc("match_chunks", {"query_embedding": query_vector, "match_count": k}).execute()
     return result.data

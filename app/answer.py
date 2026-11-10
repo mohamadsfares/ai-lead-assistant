@@ -7,7 +7,7 @@ load_dotenv()
 client = Anthropic()
 
 MODEL = "claude-haiku-5-5"
-MIN_SIMILARITY = 0.35
+MIN_SIMILARITY = 0.20
 HANDOFF_MESSAGE = "I do not have the answer to that question, but I can connect you with our team to help you out with that. Would you like me to do that for you?"
 
 SYSTEM_PROMPT = """You are the website assistant for Cedar Ridge Roofing & Renovation.

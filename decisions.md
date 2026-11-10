@@ -21,28 +21,23 @@ Each entry: what we decided, why, and what we rejected.
 ## D5: Generic repo name, branded app name (28 Oct 2026)
 - **Why:** repo `ai-lead-assistant` describes reusable code; "Cedar Ridge AI Assistant" gives the demo a realistic face.
 
-## Open decisions
-- **API hosting:** Render (simple, free) vs. a VPS with Caddy + systemd (closer to the job, ~$5/month). Decide in session 8.
 ## D6: Claude Haiku 5.5 for answers (29 Oct 2026)
 - **Why:** fastest and lowest-cost Claude model; the task is answering from provided documents, which doesn't need the most powerful model. The first test call cost a fraction of a cent.
 - **Rejected:** Sonnet/Opus (higher cost and latency, not needed yet). We revisit if the evaluation shows quality problems.
 
-
 ## D7: Chunk by `##` headings, with a "Doc title > Section" prefix (3 Nov 2026)
 - **Why:** the documents were written with one topic per `##` section, so each chunk is complete and focused, and citations can name the exact section. The prefix keeps similar headings apart (e.g. "Price Ranges > Roofing" vs "Warranty > Roofing Warranty").
 - **Rejected:** fixed-size chunks (e.g. every 500 characters), which cut sentences and topics in half.
-- **Known limitation:** the FAQ section becomes one large chunk mixing several questions. Split by `###` only if the evaluation shows weak results.
+- **Known limitation:** the FAQ section becomes one large chunk mixing several questions. Split by `###` only if the evaluation shows weak results. (Evaluation result: FAQ questions all passed, so no split needed.)
 
 ## D8: Supabase (Postgres + pgvector) in Central EU (Frankfurt) (3 Nov 2026)
 - **Why:** one managed database for document vectors now and leads later (project 4); SQL search with pgvector; free tier. EU region for GDPR data residency and low latency from Lebanon. RLS enabled; the backend uses the secret key only.
 - **Rejected:** a local vector store (e.g. Chroma), simpler but with no SQL, no shared database for project 4, and harder to deploy.
 
-## D9: Similarity threshold 0.35 for human handoff (5 Nov 2026)
-- **Why:** if the best chunk scores below 0.35, the answer is very likely not in the documents, so the bot hands over to a human without calling Claude (no guessing, no cost). First observed scores: answerable ≈ 0.59, related ≈ 0.43, gap ≈ 0.25.
-- **Status:** a first estimate, to be tuned with the evaluation set.
-- **Known limitation:** multi-part questions ("gutter guards + solar panels?") can miss one part's chunk, because one question = one vector. Candidate fixes (retrieve top 5, or split the question) will be compared in the evaluation.
+## D9: Similarity threshold for human handoff (5 Nov 2026)
+- **Why:** if the best chunk scores below the threshold, the answer is very likely not in the documents, so the bot hands over to a human without calling Claude (no guessing, no cost). First observed scores: answerable ≈ 0.59, related ≈ 0.43, gap ≈ 0.25. Started at 0.35.
+- **Status:** superseded by D11 after evaluation.
+- **Known limitation:** multi-part questions ("gutter guards + solar panels?") can miss one part's chunk, because one question = one vector.
 
 ## D10: Lead extraction with forced tool calling + Pydantic; qualification rules in Python (9 Nov 2026)
-- **Why:** a forced tool call (`tool_choice`) makes Claude return the lead as structured data matching the `LeadSummary` schema; Pydantic validates it (allowed values, required fields), with one retry on a validation error. Missing details stay empty, never guessed.
-- **Qualification in code, not in the LLM:** contact details, service area and offered service are fixed business rules, so plain Python is reliable, testable, explainable and free. The LLM only extracts.
-- **Rejected:** asking Claude for "JSON in text" (can break format or invent fields); letting Claude decide if a lead is qualified (varies between runs, hard to test).
+- **Why:** a forced tool call
