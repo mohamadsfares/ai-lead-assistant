@@ -57,7 +57,6 @@ def answer_question(question):
 
 
 if __name__ == "__main__":
-    for q in ["How much does a new roof cost?", "Do you offer a discount for seniors?"]:
-        print(answer_question(q))
-        print("---")
-
+    for q in ["How much are gutter guards, and do you install solar panels?"]:
+        result = answer_question(q)
+        print(result["answer"])

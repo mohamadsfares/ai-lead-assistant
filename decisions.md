@@ -36,3 +36,13 @@ Each entry: what we decided, why, and what we rejected.
 ## D8: Supabase (Postgres + pgvector) in Central EU (Frankfurt) (3 Nov 2026)
 - **Why:** one managed database for document vectors now and leads later (project 4); SQL search with pgvector; free tier. EU region for GDPR data residency and low latency from Lebanon. RLS enabled; the backend uses the secret key only.
 - **Rejected:** a local vector store (e.g. Chroma), simpler but with no SQL, no shared database for project 4, and harder to deploy.
+
+## D9: Similarity threshold 0.35 for human handoff (5 Nov 2026)
+- **Why:** if the best chunk scores below 0.35, the answer is very likely not in the documents, so the bot hands over to a human without calling Claude (no guessing, no cost). First observed scores: answerable ≈ 0.59, related ≈ 0.43, gap ≈ 0.25.
+- **Status:** a first estimate, to be tuned with the evaluation set.
+- **Known limitation:** multi-part questions ("gutter guards + solar panels?") can miss one part's chunk, because one question = one vector. Candidate fixes (retrieve top 5, or split the question) will be compared in the evaluation.
+
+## D10: Lead extraction with forced tool calling + Pydantic; qualification rules in Python (9 Nov 2026)
+- **Why:** a forced tool call (`tool_choice`) makes Claude return the lead as structured data matching the `LeadSummary` schema; Pydantic validates it (allowed values, required fields), with one retry on a validation error. Missing details stay empty, never guessed.
+- **Qualification in code, not in the LLM:** contact details, service area and offered service are fixed business rules, so plain Python is reliable, testable, explainable and free. The LLM only extracts.
+- **Rejected:** asking Claude for "JSON in text" (can break format or invent fields); letting Claude decide if a lead is qualified (varies between runs, hard to test).
