@@ -41,3 +41,8 @@ Each entry: what we decided, why, and what we rejected.
 
 ## D10: Lead extraction with forced tool calling + Pydantic; qualification rules in Python (9 Nov 2026)
 - **Why:** a forced tool call
+
+## D12: Claude Code as a read-only reviewer (10 Nov 2026)
+- **Why:** I write the code myself; Claude Code reviews it ("review, don't fix") and I fix the issues. It found failure cases the evaluation couldn't (empty search results, API outages, messy town input like "Columbus, OH").
+- **Least privilege:** permission deny rules block reading `.env`, editing files and running shell commands; reviews run in plan mode (read-only), logged in with a subscription, not the project's API key.
+- **Fixed now:** empty search → handoff; empty model reply → handoff; town normalization. **Deferred to the FastAPI session:** API error handling, sync vs async routes, input length limits.

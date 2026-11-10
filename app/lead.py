@@ -47,15 +47,24 @@ def extract_lead(conversation):
     raise ValueError("Could not extract a valid lead after 2 attempts")
 
 
+def normalize_town(town):
+    if not town:                       # None or "" → unknown
+        return None
+    town = town.lower().strip()
+    town = town.removesuffix(", ohio").removesuffix(", oh")
+    return town.strip()
+
+
 
 
 def qualify_lead(lead):
     reasons=[]
     if not lead.phone and not lead.email:
         reasons.append("no contact details")
-    if lead.town is None:
+    town = normalize_town(lead.town)
+    if town is None:
         reasons.append("town unknown")
-    elif lead.town.lower() not in CORE_TOWNS and lead.town.lower() not in EXTENDED_TOWNS:
+    elif town not in CORE_TOWNS and town not in EXTENDED_TOWNS:
         reasons.append("outside service area")
     if  lead.service is None or lead.service == "other":
         reasons.append("unclear or not offered")

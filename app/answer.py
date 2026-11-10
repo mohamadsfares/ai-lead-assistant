@@ -32,7 +32,7 @@ def answer_question(question):
     chunks = search(question)
 
     # 2. handoff: best score too low → don't call Claude
-    if chunks[0]["similarity"] < MIN_SIMILARITY:
+    if not chunks or chunks[0]["similarity"] < MIN_SIMILARITY:
         return {"answer": HANDOFF_MESSAGE, "sources": [], "handoff": True}
 
     # 3. ask Claude, giving it the sources + the question
@@ -45,11 +45,10 @@ def answer_question(question):
     )
 
     # 4. take only the text block (skip thinking blocks)
-    answer = ""
-    for block in response.content:
-        if block.type == "text":
-            answer = block.text
-
+    answer = "".join(block.text for block in response.content if block.type == "text").strip()
+    if not answer:
+        return {"answer": HANDOFF_MESSAGE, "sources": [], "handoff": True}
+ 
     # 5. list the sources for the citations
     sources = [f"{c['source']} > {c['section']}" for c in chunks]
 
