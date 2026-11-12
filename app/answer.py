@@ -4,7 +4,7 @@ from anthropic import Anthropic
 from app.retrieval import search
 
 load_dotenv()
-client = Anthropic()
+client = Anthropic(timeout=30)
 
 MODEL = "claude-haiku-5-5"
 MIN_SIMILARITY = 0.20
@@ -33,7 +33,7 @@ def answer_question(question):
 
     # 2. handoff: best score too low → don't call Claude
     if not chunks or chunks[0]["similarity"] < MIN_SIMILARITY:
-        return {"answer": HANDOFF_MESSAGE, "sources": [], "handoff": True}
+        return {"answer": HANDOFF_MESSAGE, "sources": [], "handoff": True, "usage":{"input_tokens": 0, "output_tokens": 0}}
 
     # 3. ask Claude, giving it the sources + the question
     context = build_context(chunks)
@@ -43,16 +43,18 @@ def answer_question(question):
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": f"Sources:\n{context}\n\nQuestion: {question}"}],
     )
+    usage = {"input_tokens": response.usage.input_tokens,
+             "output_tokens": response.usage.output_tokens}  
 
     # 4. take only the text block (skip thinking blocks)
     answer = "".join(block.text for block in response.content if block.type == "text").strip()
     if not answer:
-        return {"answer": HANDOFF_MESSAGE, "sources": [], "handoff": True}
+        return {"answer": HANDOFF_MESSAGE, "sources": [], "handoff": True, "usage": usage}
  
     # 5. list the sources for the citations
     sources = [f"{c['source']} > {c['section']}" for c in chunks]
 
-    return {"answer": answer, "sources": sources, "handoff": False}
+    return {"answer": answer, "sources": sources, "handoff": False, "usage": usage}
 
 
 if __name__ == "__main__":

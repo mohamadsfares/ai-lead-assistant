@@ -46,3 +46,11 @@ Each entry: what we decided, why, and what we rejected.
 - **Why:** I write the code myself; Claude Code reviews it ("review, don't fix") and I fix the issues. It found failure cases the evaluation couldn't (empty search results, API outages, messy town input like "Columbus, OH").
 - **Least privilege:** permission deny rules block reading `.env`, editing files and running shell commands; reviews run in plan mode (read-only), logged in with a subscription, not the project's API key.
 - **Fixed now:** empty search → handoff; empty model reply → handoff; town normalization. **Deferred to the FastAPI session:** API error handling, sync vs async routes, input length limits.
+
+## D13: FastAPI service design (12 Nov 2026)
+- **Thin endpoints:** routes only validate, call the existing modules and return; all logic stays in `app/`.
+- **Sync `def` routes:** the OpenAI, Supabase and Anthropic clients are blocking, so FastAPI runs each request in a thread instead of freezing the event loop.
+- **Safety at the door:** Pydantic length limits (422 before any paid call), catch-all error handling that logs details and returns a generic 503, 30 s client timeouts on top of the SDKs' built-in retries.
+- **Cost logging:** token usage is returned internally (hidden from callers by `response_model`) and saved per request in `request_logs`; a failed log insert only warns and never breaks the response.
+- **Schema descriptions:** urgency values are defined in the Pydantic schema (`Field(description=...)`), which made "active leak" consistently classified as `emergency`.
+- **Rejected:** `async def` with sync clients (would block other requests); returning raw error messages to callers (leaks internal details).

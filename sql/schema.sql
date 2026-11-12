@@ -32,3 +32,17 @@ as $$
   order by embedding <=> query_embedding
   limit match_count;
 $$;
+
+-- 4. Request logs: one row per API request (tokens, cost, latency)
+create table request_logs (
+  id bigserial primary key,
+  created_at timestamptz not null default now(),
+  endpoint text not null,
+  latency_s float not null,
+  input_tokens int not null,
+  output_tokens int not null,
+  cost_usd float not null,
+  outcome text
+);
+
+alter table request_logs enable row level security;

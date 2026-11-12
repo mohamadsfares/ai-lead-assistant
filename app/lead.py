@@ -5,7 +5,7 @@ from pydantic import ValidationError
 from app.schemas import LeadSummary
 
 load_dotenv()
-client = Anthropic()
+client = Anthropic(timeout=30)
 
 MODEL = "claude-haiku-5-5"
 
@@ -28,32 +28,32 @@ EXTENDED_TOWNS = {"delaware", "newark", "marysville", "lancaster"}
 
 
 def extract_lead(conversation):
+    usage = {"input_tokens": 0, "output_tokens": 0}              
     for attempt in range(2):
-        response= client.messages.create(
-            model=MODEL, 
-              max_tokens=1000, 
-              system=LEAD_SYSTEM_PROMPT,
-              messages=[{"role": "user", "content": conversation}],
-              tools=[LEAD_TOOL],
-              tool_choice ={"type": "tool", "name": "save_lead"},
-              )
+        response = client.messages.create(
+            model=MODEL,
+            max_tokens=1000,
+            system=LEAD_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": conversation}],
+            tools=[LEAD_TOOL],
+            tool_choice={"type": "tool", "name": "save_lead"},
+        )
+        usage["input_tokens"] += response.usage.input_tokens        
+        usage["output_tokens"] += response.usage.output_tokens     
         for block in response.content:
             if block.type == "tool_use":
                 try:
-                    return LeadSummary(**block.input)
+                    return LeadSummary(**block.input), usage        
                 except ValidationError:
                     continue
-    
     raise ValueError("Could not extract a valid lead after 2 attempts")
 
-
 def normalize_town(town):
-    if not town:                       # None or "" → unknown
-        return None
+    if not town:
+        return None                 # ← this line, indented under the if
     town = town.lower().strip()
     town = town.removesuffix(", ohio").removesuffix(", oh")
     return town.strip()
-
 
 
 
@@ -71,10 +71,9 @@ def qualify_lead(lead):
     return {"qualified": len(reasons) == 0, "reasons": reasons}
     
 
-
-
 if __name__ == "__main__":
     chat = "Hi, I'm Rami from Cincinnati. Do you install solar panels? You can email me at rami@example.com."
-    lead = extract_lead(chat)
+    lead, usage = extract_lead(chat)
     print(lead)
+    print(usage)
     print(qualify_lead(lead))

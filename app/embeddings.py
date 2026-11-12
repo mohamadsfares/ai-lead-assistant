@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 load_dotenv()
-client= OpenAI()
+client = OpenAI(timeout=30)
 EMBEDDING_MODEL="text-embedding-3-small"
 
 
