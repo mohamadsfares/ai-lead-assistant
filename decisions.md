@@ -54,3 +54,11 @@ Each entry: what we decided, why, and what we rejected.
 - **Cost logging:** token usage is returned internally (hidden from callers by `response_model`) and saved per request in `request_logs`; a failed log insert only warns and never breaks the response.
 - **Schema descriptions:** urgency values are defined in the Pydantic schema (`Field(description=...)`), which made "active leak" consistently classified as `emergency`.
 - **Rejected:** `async def` with sync clients (would block other requests); returning raw error messages to callers (leaks internal details).
+
+## D14: Deploy the API on Render (free tier, Frankfurt) (17 Nov 2026)
+- **Why:** simplest path to a live HTTPS URL with no server maintenance; auto-deploys on every push to `main`; free tier is enough for a demo. Region Frankfurt, next to the Supabase database, so every search stays in the same region.
+- **Secrets:** production keys (Anthropic, OpenAI, Supabase) are separate from the laptop's dev keys and live only in Render's environment variables and Bitwarden, never in Git or `.env`. Each key can be revoked alone.
+- **Python pinned:** `.python-version` = 3.13 (the version we develop and test on).
+- **Trade-off:** free instances sleep after 15 min of inactivity; the first request then takes ~1 minute (cold start). Acceptable for a demo; the Streamlit app will show a "waking up" message.
+- **Rejected (for now):** a VPS with Caddy + systemd (~$5/month), which is closer to production work but adds server maintenance. Possible later upgrade.
+- **Known limitation:** dev and prod share one Supabase database, so request_logs mixes laptop and server rows.
