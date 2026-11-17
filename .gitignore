@@ -4,3 +4,4 @@ __pycache__/
 .vscode/
 .claude/settings.local.json
 .pytest_cache/
+.streamlit/secrets.toml
