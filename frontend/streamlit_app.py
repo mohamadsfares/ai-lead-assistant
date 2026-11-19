@@ -1,7 +1,9 @@
 import streamlit as st
 import requests
+import os 
 
-API_URL = "https://ai-lead-assistant-v79o.onrender.com"
+API_URL = os.environ.get("API_URL", "https://ai-lead-assistant-v79o.onrender.com")
+PUBLIC_API_URL = os.environ.get("PUBLIC_API_URL", API_URL)
 
 EXAMPLES = [
     "How much does a new roof cost?",
@@ -179,7 +181,7 @@ with st.sidebar:
     st.markdown(
         "**Links**\n"
         "- [Source code on GitHub](https://github.com/mohamadsfares/ai-lead-assistant)\n"
-        f"- [API docs]({API_URL}/docs)"
+        f"- [API docs]({PUBLIC_API_URL}/docs)"
     )
     st.caption("Cedar Ridge Roofing & Renovation is a fictional company used as demo data. The first answer can take up to a minute while the server wakes up.")
 
