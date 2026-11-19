@@ -72,3 +72,11 @@ Each entry: what we decided, why, and what we rejected.
 - **Why:** pinging `/health` every 5 minutes keeps the free Render API awake (no cold start for visitors) and sends an email alert if it goes down. `/health` makes no AI calls, so the pings cost nothing.
 - **Known limitation:** the Streamlit page can still sleep after a long time without real visitors; open it before sharing the link.
 - **Next (planned):** a one-month VPS (session 9b) to host the API and the demo always-on, with Render + Streamlit Cloud kept as a backup.
+
+## D17: Main deployment on a VPS with systemd + Caddy (19 Nov 2026)
+- **Why:** no cold starts (free tiers sleep), full control, and it practices the exact stack used in production work: SSH, systemd, Caddy, log management. One server runs both the API and the demo; the demo calls the API over `127.0.0.1` (fast, no internet hop).
+- **Security:** SSH key login only, root login and password login disabled, firewall allows only 22/80/443, apps listen only on `127.0.0.1` behind Caddy, `.env` readable only by the app user, the demo service gets no secrets. Hosting account protected with two-step login.
+- **Config:** the frontend reads `API_URL` / `PUBLIC_API_URL` from the environment (Render as default), so the same code runs on Streamlit Cloud and on the VPS.
+- **Cost:** one month (KVM 1) with auto-renew off; free domain for one year with auto-renew off.
+- **Trade-off:** I maintain the server myself (updates, security), and updates are manual (`git pull` + restart) instead of auto-deploy.
+- **Backup:** Render + Streamlit Cloud stay online, so the demo survives when the VPS month ends.

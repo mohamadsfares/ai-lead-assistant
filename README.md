@@ -5,10 +5,10 @@ An AI assistant for a home-improvement company that answers website visitors fro
 > Cedar Ridge Roofing & Renovation (Columbus, Ohio) is a fictional company used as demo data. The code is company-agnostic.
 
 ## 🌍 Live demo
-- **Chat demo:** https://ai-lead-assistant.streamlit.app: ask questions, or open the **Sales team view** to see a chat turned into a qualified lead
-- **API docs:** https://ai-lead-assistant-v79o.onrender.com/docs: try `/chat` and `/qualify-lead` directly
+- **Chat demo:** https://demo.mohamadfares.tech: ask questions, or open the **Sales team view** to see a chat turned into a qualified lead
+- **API docs:** https://api.mohamadfares.tech/docs: try `/chat` and `/qualify-lead` directly
 
-> Free hosting: if nobody has used the demo for a while, the first answer can take up to a minute while the servers wake up. The API is kept awake by an uptime monitor.
+Runs on my own VPS (always on, HTTPS). Backup copies on free hosting (may take ~1 minute to wake up): [Streamlit Cloud](https://ai-lead-assistant.streamlit.app) · [Render API](https://ai-lead-assistant-v79o.onrender.com/docs)
 
 ## Problem
 Home-improvement companies get website visitors at all hours asking the same questions: service areas, price ranges, financing, warranties. Slow answers lose leads to competitors, and the sales team wastes time on visitors who are outside the service area or not ready to buy.
@@ -68,14 +68,16 @@ Every request is logged to a `request_logs` table (endpoint, latency, input/outp
 - **Lead rules:** town normalization, qualified lead, missing contact, outside the service area, unknown town
 - **API:** health check, empty and too-long input (422), internal usage data hidden from the response, safe 503 when the AI call fails
 
-The tests replace the AI calls with fakes (monkeypatch), so they are fast, free and repeatable.
+The tests replace the AI calls with fakes (monkeypatch), so they are fast, free and repeatable. They pass both locally (Windows) and on the server (Ubuntu).
 
 ## Deployment
-- **Render** web service for the API (free tier, Frankfurt, next to the database), auto-deploys on every push to `main`
+- **VPS (main):** Hostinger KVM 1, Ubuntu 24.04 LTS, Frankfurt. Hardened (SSH keys only, no root login, `ufw` firewall with only 22/80/443 open). FastAPI and Streamlit run as **systemd** services bound to `127.0.0.1`; **Caddy** is the reverse proxy with automatic HTTPS (Let's Encrypt) for `api.` and `demo.mohamadfares.tech`. Secrets in a server-side `.env` with `chmod 600`; logs via `journalctl`. Updates: `git pull` + `systemctl restart`.
+- **Render** (backup API): free tier, Frankfurt, next to the database, auto-deploys on every push to `main`
+- **Streamlit Community Cloud** (backup demo): hosts the UI from `frontend/` (its own `requirements.txt`, theme in `.streamlit/config.toml`); it only calls the API, so it holds no keys
+- The frontend reads `API_URL` / `PUBLIC_API_URL` from the environment, so the same code runs on every host
 - Python pinned with `.python-version` (3.13)
-- **Separate production keys** stored only in Render's environment variables; dev keys stay in a local `.env` that is never committed
-- **Streamlit Community Cloud** hosts the demo UI from `frontend/` (its own `requirements.txt`, theme in `.streamlit/config.toml`); it only calls the API, so it holds no keys
-- **UptimeRobot** checks `/health` every 5 minutes: it keeps the free API awake and emails an alert if it goes down
+- **Separate production keys**, stored only on the servers (Render settings, VPS `.env`) and in a password manager; dev keys stay in a local `.env` that is never committed
+- **UptimeRobot** checks the Render `/health` every 5 minutes: keeps the free API awake and emails an alert if it goes down
 
 ## Code review
 The code was reviewed with Claude Code as a **read-only reviewer** (no edit or shell permissions, `.env` blocked). It found 8 issues: 7 fixed, 1 planned for the polish stage (show only the sources the answer actually cites).
@@ -88,9 +90,9 @@ The code was reviewed with Claude Code as a **read-only reviewer** (no edit or s
 - The API is public with no authentication or rate limiting; a real deployment would add an API key and rate limits
 - The **Sales team view** is a demo of an internal tool; in production it runs automatically (n8n) behind a login
 - Dev and prod share one Supabase database
-- Free hosting has a cold start (up to ~1 minute)
+- VPS updates are manual (`git pull` + restart); the free backups have a cold start (up to ~1 minute)
 
 ## Status
 🚧 In progress: session 10 (diagram, demo video)
 
-Done: knowledge base, secure key handling, retrieval (Supabase + pgvector), grounded answers with citations and handoff, Pydantic lead extraction with tool calling, 40-question evaluation, FastAPI service with error handling and cost logging, tests, live deployment, Streamlit demo, uptime monitoring.
+Done: knowledge base, secure key handling, retrieval (Supabase + pgvector), grounded answers with citations and handoff, Pydantic lead extraction with tool calling, 40-question evaluation, FastAPI service with error handling and cost logging, tests, deployment (VPS with systemd + Caddy + HTTPS, plus Render and Streamlit Cloud as backups), Streamlit demo, uptime monitoring.
