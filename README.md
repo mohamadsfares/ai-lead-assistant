@@ -4,10 +4,11 @@ An AI assistant for a home-improvement company that answers website visitors fro
 
 > Cedar Ridge Roofing & Renovation (Columbus, Ohio) is a fictional company used as demo data. The code is company-agnostic.
 
-## 🌍 Live API
-**https://ai-lead-assistant-v79o.onrender.com/docs**: try `/chat` and `/qualify-lead` in the browser.
+## 🌍 Live demo
+- **Chat demo:** https://ai-lead-assistant.streamlit.app: ask questions, or open the **Sales team view** to see a chat turned into a qualified lead
+- **API docs:** https://ai-lead-assistant-v79o.onrender.com/docs: try `/chat` and `/qualify-lead` directly
 
-> Hosted on Render's free tier: after 15 minutes without traffic the server sleeps, so the **first request can take ~1 minute** to wake it up. After that, answers take a few seconds.
+> Free hosting: if nobody has used the demo for a while, the first answer can take up to a minute while the servers wake up. The API is kept awake by an uptime monitor.
 
 ## Problem
 Home-improvement companies get website visitors at all hours asking the same questions: service areas, price ranges, financing, warranties. Slow answers lose leads to competitors, and the sales team wastes time on visitors who are outside the service area or not ready to buy.
@@ -18,7 +19,7 @@ Home-improvement companies get website visitors at all hours asking the same que
 - Produce a **Pydantic-validated JSON lead summary** (service, location, budget, urgency, qualified)
 - Log **tokens, cost and latency** for every request
 - Measure quality with an **evaluation set** of 40 questions
-- Serve it as a **FastAPI** service (used by an n8n automation in project 4) with a **Streamlit** chat demo
+- Serve it as a **FastAPI** service (used by an n8n automation in project 4) with a **Streamlit** demo
 
 ## How it works
 1. **Knowledge base:** 7 Markdown documents, split into 38 chunks by `##` section (`app/chunking.py`)
@@ -27,6 +28,7 @@ Home-improvement companies get website visitors at all hours asking the same que
 4. **Grounded answers:** the top 5 chunks go to Claude Haiku 5.5 as numbered sources; the answer cites them as [1], [2]... Off-topic questions (very low similarity) hand over without calling Claude (`app/answer.py`)
 5. **Lead summary:** a forced tool call fills a Pydantic `LeadSummary` schema; Python rules decide if the lead is qualified and why (`app/schemas.py`, `app/lead.py`)
 6. **API:** FastAPI with input limits, safe error messages (503), timeouts, retries, and a cost/latency log per request (`app/main.py`, `app/costs.py`, `app/logs.py`)
+7. **Demo UI:** a Streamlit app with two pages: a customer chat (sources, handoff box, example questions) and a sales team view that qualifies a lead from a sample or from your own chat (`frontend/streamlit_app.py`)
 
 Design decisions and trade-offs are logged in [`decisions.md`](decisions.md).
 
@@ -69,9 +71,11 @@ Every request is logged to a `request_logs` table (endpoint, latency, input/outp
 The tests replace the AI calls with fakes (monkeypatch), so they are fast, free and repeatable.
 
 ## Deployment
-- **Render** web service (free tier, Frankfurt, next to the database), auto-deploys on every push to `main`
+- **Render** web service for the API (free tier, Frankfurt, next to the database), auto-deploys on every push to `main`
 - Python pinned with `.python-version` (3.13)
 - **Separate production keys** stored only in Render's environment variables; dev keys stay in a local `.env` that is never committed
+- **Streamlit Community Cloud** hosts the demo UI from `frontend/` (its own `requirements.txt`, theme in `.streamlit/config.toml`); it only calls the API, so it holds no keys
+- **UptimeRobot** checks `/health` every 5 minutes: it keeps the free API awake and emails an alert if it goes down
 
 ## Code review
 The code was reviewed with Claude Code as a **read-only reviewer** (no edit or shell permissions, `.env` blocked). It found 8 issues: 7 fixed, 1 planned for the polish stage (show only the sources the answer actually cites).
@@ -80,10 +84,13 @@ The code was reviewed with Claude Code as a **read-only reviewer** (no edit or s
 - One multi-part question still misses a source (one question = one search vector)
 - Evaluation uses keyword checks (cheap but brittle); next step is an LLM-as-judge
 - The sources list includes retrieved chunks that weren't cited
+- The handoff flag covers off-topic questions; knowledge gaps are handled in the answer text but not yet flagged
+- The API is public with no authentication or rate limiting; a real deployment would add an API key and rate limits
+- The **Sales team view** is a demo of an internal tool; in production it runs automatically (n8n) behind a login
 - Dev and prod share one Supabase database
-- Free hosting has a ~1 minute cold start
+- Free hosting has a cold start (up to ~1 minute)
 
 ## Status
-🚧 In progress: session 9 (Streamlit demo)
+🚧 In progress: session 10 (diagram, demo video)
 
-Done: knowledge base, secure key handling, retrieval (Supabase + pgvector), grounded answers with citations and handoff, Pydantic lead extraction with tool calling, 40-question evaluation, FastAPI service with error handling and cost logging, tests, live deployment.
+Done: knowledge base, secure key handling, retrieval (Supabase + pgvector), grounded answers with citations and handoff, Pydantic lead extraction with tool calling, 40-question evaluation, FastAPI service with error handling and cost logging, tests, live deployment, Streamlit demo, uptime monitoring.

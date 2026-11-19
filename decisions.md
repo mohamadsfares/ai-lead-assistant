@@ -62,3 +62,13 @@ Each entry: what we decided, why, and what we rejected.
 - **Trade-off:** free instances sleep after 15 min of inactivity; the first request then takes ~1 minute (cold start). Acceptable for a demo; the Streamlit app will show a "waking up" message.
 - **Rejected (for now):** a VPS with Caddy + systemd (~$5/month), which is closer to production work but adds server maintenance. Possible later upgrade.
 - **Known limitation:** dev and prod share one Supabase database, so request_logs mixes laptop and server rows.
+
+## D15: Streamlit demo as a separate frontend that only calls the API (17-19 Nov 2026)
+- **Why:** the UI is only the "face"; all logic, keys and the database stay in the API. The frontend has no secrets, its own `requirements.txt` (streamlit + requests only), and is hosted free on Streamlit Community Cloud from `frontend/`.
+- **Design:** two pages with a top menu: a customer chat (history in `session_state`, sources, handoff box, example questions, friendly errors, wake-up ping) and a **Sales team view** that shows the lead extraction (decision, fields, raw JSON). The sales view is labeled as a demo of an internal tool; "Use my chat" connects the two pages.
+- **Rejected:** importing the backend code directly into Streamlit (mixes UI and logic, would need the keys in the frontend); `st.tabs` (draws both pages on every run, works badly with the pinned chat box and `st.rerun()`).
+
+## D16: Uptime monitoring with UptimeRobot (19 Nov 2026)
+- **Why:** pinging `/health` every 5 minutes keeps the free Render API awake (no cold start for visitors) and sends an email alert if it goes down. `/health` makes no AI calls, so the pings cost nothing.
+- **Known limitation:** the Streamlit page can still sleep after a long time without real visitors; open it before sharing the link.
+- **Next (planned):** a one-month VPS (session 9b) to host the API and the demo always-on, with Render + Streamlit Cloud kept as a backup.

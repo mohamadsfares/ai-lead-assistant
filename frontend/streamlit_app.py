@@ -7,6 +7,7 @@ EXAMPLES = [
     "How much does a new roof cost?",
     "Do you serve Dublin, Ohio?",
     "Do you offer financing?",
+    "Do you install solar panels?",
 ]
 
 HANDOFF_NOTE = "📞 Want to talk to a person? Call our team at (614) 555-0142."
