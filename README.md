@@ -21,6 +21,37 @@ Home-improvement companies get website visitors at all hours asking the same que
 - Measure quality with an **evaluation set** of 40 questions
 - Serve it as a **FastAPI** service (used by an n8n automation in project 4) with a **Streamlit** demo
 
+## Architecture
+
+```mermaid
+flowchart LR
+    V["Visitor (browser)"]
+    N8N["n8n workflow<br/>(project 4, planned)"]
+
+    subgraph VPS["Hostinger VPS · Ubuntu 24.04 · Frankfurt"]
+        C["Caddy<br/>HTTPS reverse proxy"]
+        S["Streamlit demo<br/>demo.mohamadfares.tech"]
+        A["FastAPI<br/>api.mohamadfares.tech"]
+    end
+
+    subgraph EXT["External services"]
+        O["OpenAI<br/>text-embedding-3-small"]
+        DB[("Supabase · Postgres + pgvector<br/>chunks + request_logs")]
+        CL["Claude Haiku 5.5<br/>answers + lead tool call"]
+    end
+
+    V -->|HTTPS| C
+    C --> S
+    C --> A
+    S -->|"/chat · /qualify-lead"| A
+    N8N -.->|"/qualify-lead"| A
+    A -->|"1 · embed the question"| O
+    A -->|"2 · vector search + logs"| DB
+    A -->|"3 · answer from sources"| CL
+```
+
+Both apps listen only on `127.0.0.1`; Caddy is the only public entry. Backup copies run on Render (API) and Streamlit Cloud (demo).
+
 ## How it works
 1. **Knowledge base:** 7 Markdown documents, split into 38 chunks by `##` section (`app/chunking.py`)
 2. **Embeddings:** each chunk becomes a 1,536-number vector with OpenAI `text-embedding-3-small` (`app/embeddings.py`)
@@ -76,7 +107,7 @@ The tests replace the AI calls with fakes (monkeypatch), so they are fast, free 
 - **Streamlit Community Cloud** (backup demo): hosts the UI from `frontend/` (its own `requirements.txt`, theme in `.streamlit/config.toml`); it only calls the API, so it holds no keys
 - The frontend reads `API_URL` / `PUBLIC_API_URL` from the environment, so the same code runs on every host
 - Python pinned with `.python-version` (3.13)
-- **Separate production keys**, stored only on the servers (Render settings, VPS `.env`) and in a password manager; dev keys stay in a local `.env` that is never committed
+- **Separate production keys**, stored only on the servers (Render settings, VPS `.env`) and in a password manager; dev keys stay in a local `.env` that is never committed. Keys are rotated before they expire (new key → switch → test → delete old)
 - **UptimeRobot** checks the Render `/health` every 5 minutes: keeps the free API awake and emails an alert if it goes down
 
 ## Code review
@@ -95,4 +126,4 @@ The code was reviewed with Claude Code as a **read-only reviewer** (no edit or s
 ## Status
 🚧 In progress: session 10 (diagram, demo video)
 
-Done: knowledge base, secure key handling, retrieval (Supabase + pgvector), grounded answers with citations and handoff, Pydantic lead extraction with tool calling, 40-question evaluation, FastAPI service with error handling and cost logging, tests, deployment (VPS with systemd + Caddy + HTTPS, plus Render and Streamlit Cloud as backups), Streamlit demo, uptime monitoring.
+Done: knowledge base, secure key handling, retrieval (Supabase + pgvector), grounded answers with citations and handoff, Pydantic lead extraction with tool calling, 40-question evaluation, FastAPI service with error handling and cost logging, tests, deployment (VPS with systemd + Caddy + HTTPS, plus Render and Streamlit Cloud as backups), Streamlit demo, uptime monitoring, architecture diagram.
