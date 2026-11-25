@@ -95,12 +95,13 @@ Every request is logged to a `request_logs` table (endpoint, latency, input/outp
 ≈ 5,000 answers per $1.
 
 ## Tests
-15 pytest tests (`tests/`), run with `python -m pytest`:
+18 pytest tests (`tests/`), run with `python -m pytest`:
 - **Lead rules:** town normalization, qualified lead, missing contact, outside the service area, unknown town
 - **API:** health check, empty and too-long input (422), internal usage data hidden from the response, safe 503 when the AI call fails, rate limit returns 429
 - **Citations:** only cited sources kept with their numbers, duplicates once, no citations → empty, out-of-range numbers ignored
+- **Frontend (Streamlit `AppTest`):** page loads with the example buttons, a question shows the answer and its sources, a 429 shows a friendly "wait a minute" message
 
-The tests replace the AI calls with fakes (monkeypatch), so they are fast, free and repeatable. They pass both locally (Windows) and on the server (Ubuntu).
+The tests replace the AI calls and the HTTP requests with fakes (monkeypatch), so they are fast, free, offline and repeatable. They pass both locally (Windows) and on the server (Ubuntu).
 
 ## Deployment
 - **VPS (main):** Hostinger KVM 1, Ubuntu 24.04 LTS, Frankfurt. Hardened (SSH keys only, no root login, `ufw` firewall with only 22/80/443 open). FastAPI and Streamlit run as **systemd** services bound to `127.0.0.1`; **Caddy** is the reverse proxy with automatic HTTPS (Let's Encrypt) for `api.` and `demo.mohamadfares.tech`. Secrets in a server-side `.env` with `chmod 600`; logs via `journalctl`. Updates: `git pull` + `systemctl restart`.

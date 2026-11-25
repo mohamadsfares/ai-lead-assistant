@@ -3,12 +3,12 @@ import re
 from dotenv import load_dotenv
 from anthropic import Anthropic
 
+from app.config import MODEL
 from app.retrieval import search
 
 load_dotenv()
 client = Anthropic(timeout=30)
 
-MODEL = "claude-haiku-5-5"
 MIN_SIMILARITY = 0.20
 HANDOFF_MARKER = "[HANDOFF]"
 HANDOFF_MESSAGE = "I do not have the answer to that question, but I can connect you with our team to help you out with that. Would you like me to do that for you?"

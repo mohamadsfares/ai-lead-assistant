@@ -93,3 +93,7 @@ Each entry: what we decided, why, and what we rejected.
 - **Frontend:** a 429 shows "please wait a minute" instead of "not available" (specific `HTTPError` caught before `RequestException`).
 - **Known limitation:** demo visitors share one counter (the demo calls the API from the server). Limits were set high enough for normal use; an API key for internal callers is the next step.
 - **Rejected:** an in-memory counter written by hand (reinventing a standard library); limiting in Caddy (needs a custom Caddy build with a plugin).
+
+## D20: Frontend tests and a shared config (25 Nov 2026)
+- **Frontend tests:** Streamlit's `AppTest` runs the page without a browser; `requests` is faked, so the tests check the page loads, shows answers with sources, and handles a 429, for free and offline.
+- **Shared config:** the model name lives in one module (`app/config.py`) used by both `answer.py` and `lead.py`, so a model change can't leave one file behind.

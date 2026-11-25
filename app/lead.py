@@ -3,11 +3,11 @@ from anthropic import Anthropic
 from pydantic import ValidationError
 
 from app.schemas import LeadSummary
+from app.config import MODEL
 
 load_dotenv()
 client = Anthropic(timeout=30)
 
-MODEL = "claude-haiku-5-5"
 
 LEAD_TOOL = {
     "name": "save_lead",
