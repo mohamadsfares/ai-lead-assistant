@@ -47,3 +47,16 @@ def test_chat_returns_503_when_answering_fails(monkeypatch):
     response = client.post("/chat", json={"question": "How much is a roof?"})
     assert response.status_code == 503
     assert "Claude" not in response.json()["detail"]   # no internal details leaked
+
+
+def test_chat_rate_limit_returns_429(monkeypatch):
+    fake = {"answer": "ok", "sources": [], "handoff": False, "usage": {"input_tokens": 0, "output_tokens": 0}}
+    monkeypatch.setattr(app.main, "answer_question", lambda question: fake)
+    monkeypatch.setattr(app.main, "save_log", lambda *args: None)
+    api.state.limiter.reset()
+
+    for _ in range(20):
+        assert client.post("/chat", json={"question": "hi"}).status_code == 200
+    assert client.post("/chat", json={"question": "hi"}).status_code == 429
+
+    api.state.limiter.reset()

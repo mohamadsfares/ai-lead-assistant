@@ -13,6 +13,7 @@ EXAMPLES = [
 ]
 
 HANDOFF_NOTE = "📞 Want to talk to a person? Call our team at (614) 555-0142."
+RATE_LIMIT_NOTE = "⏳ You're sending requests very fast. Please wait a minute and try again."
 
 SAMPLE_QUALIFIED = (
     "Customer: Hi, I'm Sara. I live in Dublin, Ohio and my roof started leaking after last night's storm.\n"
@@ -97,6 +98,11 @@ def chat_page():
                     st.info(HANDOFF_NOTE)
                 st.session_state.messages.append({"role": "assistant", "content": data["answer"], "sources": data["sources"], "handoff": data["handoff"]})
                 st.rerun()
+            except requests.exceptions.HTTPError as error:
+                if error.response.status_code == 429:
+                    st.warning(RATE_LIMIT_NOTE)
+                else:
+                    st.error("Sorry, the assistant is not available right now. Please try again in a minute.")
             except requests.exceptions.RequestException:
                 st.error("Sorry, the assistant is not available right now. Please try again in a minute.")
 
@@ -137,6 +143,12 @@ def lead_page():
             response = requests.post(f"{API_URL}/qualify-lead", json={"conversation": conversation}, timeout=120)
             response.raise_for_status()
             result = response.json()
+    except requests.exceptions.HTTPError as error:
+        if error.response.status_code == 429:
+            st.warning(RATE_LIMIT_NOTE)
+        else:
+            st.error("Sorry, the lead qualifier is not available right now. Please try again in a minute.")
+        return
     except requests.exceptions.RequestException:
         st.error("Sorry, the lead qualifier is not available right now. Please try again in a minute.")
         return

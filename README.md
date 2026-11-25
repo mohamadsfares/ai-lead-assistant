@@ -58,7 +58,7 @@ Both apps listen only on `127.0.0.1`; Caddy is the only public entry. Backup cop
 3. **Storage and search:** chunks + vectors in Supabase (Postgres + pgvector); a SQL function `match_chunks` ranks them by cosine similarity (`sql/schema.sql`, `scripts/ingest.py`, `app/retrieval.py`)
 4. **Grounded answers:** the top 5 chunks go to Claude Haiku 5.5 as numbered sources; the answer cites them as [1], [2]... and the API returns **only the sources the answer actually cites**. Off-topic questions (very low similarity) hand over without calling Claude; when the documents don't contain what was asked, Claude adds a `[HANDOFF]` marker that the code removes and turns into `handoff: true` (`app/answer.py`)
 5. **Lead summary:** a forced tool call fills a Pydantic `LeadSummary` schema; Python rules decide if the lead is qualified and why (`app/schemas.py`, `app/lead.py`)
-6. **API:** FastAPI with input limits, safe error messages (503), timeouts, retries, and a cost/latency log per request (`app/main.py`, `app/costs.py`, `app/logs.py`)
+6. **API:** FastAPI with input limits, per-client rate limits, safe error messages (503), timeouts, retries, and a cost/latency log per request (`app/main.py`, `app/costs.py`, `app/logs.py`)
 7. **Demo UI:** a Streamlit app with two pages: a customer chat (sources, handoff box, example questions) and a sales team view that qualifies a lead from a sample or from your own chat (`frontend/streamlit_app.py`)
 
 Design decisions and trade-offs are logged in [`decisions.md`](decisions.md).
@@ -70,7 +70,7 @@ Design decisions and trade-offs are logged in [`decisions.md`](decisions.md).
 | POST | `/chat` | `{"question": "..."}` → answer, cited sources, handoff flag |
 | POST | `/qualify-lead` | `{"conversation": "..."}` → lead summary, qualified, reasons |
 
-Invalid input returns **422**; if Claude, OpenAI or the database fail, the API returns a safe **503** message and the details go to the server logs only.
+Invalid input returns **422**; too many requests from one client return **429** (rate limit: 20/minute for `/chat`, 10/minute for `/qualify-lead`); if Claude, OpenAI or the database fail, the API returns a safe **503** message and the details go to the server logs only.
 
 ## Evaluation
 40 test questions with known answers (`eval/questions.json`): 20 answerable, 5 clear "no", 9 knowledge gaps, 4 multi-part, 2 off-topic. Run with `python -m eval.run_eval`.
@@ -95,9 +95,9 @@ Every request is logged to a `request_logs` table (endpoint, latency, input/outp
 ≈ 5,000 answers per $1.
 
 ## Tests
-14 pytest tests (`tests/`), run with `python -m pytest`:
+15 pytest tests (`tests/`), run with `python -m pytest`:
 - **Lead rules:** town normalization, qualified lead, missing contact, outside the service area, unknown town
-- **API:** health check, empty and too-long input (422), internal usage data hidden from the response, safe 503 when the AI call fails
+- **API:** health check, empty and too-long input (422), internal usage data hidden from the response, safe 503 when the AI call fails, rate limit returns 429
 - **Citations:** only cited sources kept with their numbers, duplicates once, no citations → empty, out-of-range numbers ignored
 
 The tests replace the AI calls with fakes (monkeypatch), so they are fast, free and repeatable. They pass both locally (Windows) and on the server (Ubuntu).
@@ -118,7 +118,7 @@ The code was reviewed with Claude Code as a **read-only reviewer** (no edit or s
 - One multi-part question (q35) still misses a source (one question = one search vector); candidate fix: split the question into parts before searching
 - Evaluation uses keyword checks (cheap but brittle); next step is an LLM-as-judge
 - The `[HANDOFF]` signal relies on Claude following a prompt rule; the evaluation measures it on every change
-- The API is public with no authentication or rate limiting; a real deployment would add an API key and rate limits
+- The API is rate limited per client IP, but has no API key yet; all demo visitors share one counter because the demo calls the API from the server (next step: an API key for internal callers like n8n)
 - The **Sales team view** is a demo of an internal tool; in production it runs automatically (n8n) behind a login
 - Dev and prod share one Supabase database
 - VPS updates are manual (`git pull` + restart); the free backups have a cold start (up to ~1 minute)
@@ -126,4 +126,4 @@ The code was reviewed with Claude Code as a **read-only reviewer** (no edit or s
 ## Status
 🚧 In progress: session 11 (polish)
 
-Done: knowledge base, secure key handling, retrieval (Supabase + pgvector), grounded answers with citations and handoff, Pydantic lead extraction with tool calling, 40-question evaluation, FastAPI service with error handling and cost logging, tests, deployment (VPS with systemd + Caddy + HTTPS, plus Render and Streamlit Cloud as backups), Streamlit demo, uptime monitoring, architecture diagram, cited-sources-only and explicit gap handoffs.
+Done: knowledge base, secure key handling, retrieval (Supabase + pgvector), grounded answers with citations and handoff, Pydantic lead extraction with tool calling, 40-question evaluation, FastAPI service with error handling, rate limiting and cost logging, tests, deployment (VPS with systemd + Caddy + HTTPS, plus Render and Streamlit Cloud as backups), Streamlit demo, uptime monitoring, architecture diagram, cited-sources-only and explicit gap handoffs.

@@ -86,3 +86,10 @@ Each entry: what we decided, why, and what we rejected.
 - **Gap handoffs:** Claude ends its reply with `[HANDOFF]` only when the sources lack what the customer asked for; the code removes the marker and sets `handoff: true`, so the UI and n8n can react. A clear "no" is a full answer and is not flagged.
 - **Evidence:** the first, vague rule over-flagged (handoff 37/40, facts 26/29); a precise rule plus an explicit clear-"no" exception gave handoff 39/40, facts 28/29, median 1.4 s. The remaining miss (q35) is the known multi-part retrieval limit; it is kept visible, not hidden by changing the test.
 - **Rejected:** matching phrases in the answer (brittle); a forced tool call returning {answer, handoff} (more robust but more tokens and a bigger change; candidate upgrade if the marker proves unreliable).
+
+## D19: Rate limiting with slowapi (25 Nov 2026)
+- **Why:** the API is public and every request spends AI credit; a per-IP limit (20/minute for `/chat`, 10/minute for `/qualify-lead`) stops spam before any paid call and returns 429. `/health` has no limit (uptime pings, no cost).
+- **Behind a proxy:** Caddy sends the visitor's IP in `X-Forwarded-For`, and uvicorn trusts it only from `127.0.0.1`, so each visitor gets their own counter on the VPS.
+- **Frontend:** a 429 shows "please wait a minute" instead of "not available" (specific `HTTPError` caught before `RequestException`).
+- **Known limitation:** demo visitors share one counter (the demo calls the API from the server). Limits were set high enough for normal use; an API key for internal callers is the next step.
+- **Rejected:** an in-memory counter written by hand (reinventing a standard library); limiting in Caddy (needs a custom Caddy build with a plugin).
