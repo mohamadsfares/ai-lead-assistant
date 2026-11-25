@@ -80,3 +80,9 @@ Each entry: what we decided, why, and what we rejected.
 - **Cost:** one month (KVM 1) with auto-renew off; free domain for one year with auto-renew off.
 - **Trade-off:** I maintain the server myself (updates, security), and updates are manual (`git pull` + restart) instead of auto-deploy.
 - **Backup:** Render + Streamlit Cloud stay online, so the demo survives when the VPS month ends.
+
+## D18: Only cited sources, and an explicit [HANDOFF] signal for gaps (25 Nov 2026)
+- **Cited sources:** after Claude answers, a regex reads the `[n]` citations and the API returns only those sources, each keeping its number (`"[4] services.md > ..."`), so the UI matches the answer. Pure function `cited_sources`, covered by 4 tests. The eval's retrieval metric is unaffected (it calls `search()` directly).
+- **Gap handoffs:** Claude ends its reply with `[HANDOFF]` only when the sources lack what the customer asked for; the code removes the marker and sets `handoff: true`, so the UI and n8n can react. A clear "no" is a full answer and is not flagged.
+- **Evidence:** the first, vague rule over-flagged (handoff 37/40, facts 26/29); a precise rule plus an explicit clear-"no" exception gave handoff 39/40, facts 28/29, median 1.4 s. The remaining miss (q35) is the known multi-part retrieval limit; it is kept visible, not hidden by changing the test.
+- **Rejected:** matching phrases in the answer (brittle); a forced tool call returning {answer, handoff} (more robust but more tokens and a bigger change; candidate upgrade if the marker proves unreliable).

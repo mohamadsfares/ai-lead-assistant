@@ -39,8 +39,8 @@ LEAD_FIELDS = [
 
 def show_sources(sources):
     with st.expander("Sources"):
-        for i, source in enumerate(sources, start=1):
-            st.write(f"[{i}] {source}")
+        for source in sources:
+            st.write(source)
 
 
 def chat_as_text(messages):
