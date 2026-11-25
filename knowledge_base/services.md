@@ -1,5 +1,16 @@
 # Services
 
+## Services We Offer (Overview)
+Want to know about our services or what we do? Here is the full list of services Cedar Ridge Roofing & Renovation offers for residential homes:
+- Roof Replacement: full tear-off and new asphalt shingle or standing-seam metal roofs
+- Roof Repair: leaks, missing or damaged shingles, flashing, and vents
+- Storm Damage and Insurance Claims: inspections after hail and wind storms, photo documentation, and meeting your insurance adjuster
+- Gutters: seamless aluminum gutters, downspouts, gutter guards, and gutter repair
+- Siding: vinyl and fiber cement siding, including trim and soffits
+- Windows: energy-efficient double-pane vinyl replacement windows
+- Kitchen Remodeling: cabinets, countertops, backsplash, flooring, lighting, and layout changes
+- Bathroom Remodeling: tub-to-shower conversions, walk-in showers, vanities, tile, flooring, and fixtures
+
 ## Roof Replacement
 Full tear-off and replacement of residential roofs. We install asphalt shingle roofs and standing-seam metal roofs. Every replacement includes removal of old materials, inspection and repair of the roof deck, new underlayment, new flashing, ridge vents, and full cleanup.
 

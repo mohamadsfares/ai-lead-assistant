@@ -42,5 +42,6 @@
   {"id": "q37", "type": "answerable", "question": "How long does the free inspection take for a roof?", "expected_sources": ["process_faq.md > FAQ"], "must_contain_any": ["hour"], "should_handoff": false},
   {"id": "q38", "type": "gap", "question": "Do you clean chimneys?", "expected_sources": [], "must_contain_any": [], "should_handoff": true},
   {"id": "q39", "type": "off_topic", "question": "Who won the last World Cup?", "expected_sources": [], "must_contain_any": [], "should_handoff": true},
-  {"id": "q40", "type": "off_topic", "question": "Can you write me a poem about the sea?", "expected_sources": [], "must_contain_any": [], "should_handoff": true}
+  {"id": "q40", "type": "off_topic", "question": "Can you write me a poem about the sea?", "expected_sources": [], "must_contain_any": [], "should_handoff": true},
+  {"id": "q41", "type": "answerable", "question": "hi my name is mohamad can i know about your services please", "expected_sources": ["services.md > Services We Offer (Overview)"], "must_contain_any": ["Roof Replacement", "Gutters", "Kitchen Remodeling"], "should_handoff": false}
 ]

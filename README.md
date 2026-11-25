@@ -4,7 +4,7 @@ An AI assistant for a home-improvement company that answers website visitors fro
 
 > Cedar Ridge Roofing & Renovation (Columbus, Ohio) is a fictional company used as demo data. The code is company-agnostic.
 
-## 🌍 Live demo
+## 🌐 Live demo
 - **Chat demo:** https://demo.mohamadfares.tech: ask questions, or open the **Sales team view** to see a chat turned into a qualified lead
 - **API docs:** https://api.mohamadfares.tech/docs: try `/chat` and `/qualify-lead` directly
 
@@ -18,7 +18,7 @@ Home-improvement companies get website visitors at all hours asking the same que
 - **Hand over to a human** when the documents don't contain the answer
 - Produce a **Pydantic-validated JSON lead summary** (service, location, budget, urgency, qualified)
 - Log **tokens, cost and latency** for every request
-- Measure quality with an **evaluation set** of 40 questions
+- Measure quality with an **evaluation set** of 41 questions
 - Serve it as a **FastAPI** service (used by an n8n automation in project 4) with a **Streamlit** demo
 
 ## Architecture
@@ -53,7 +53,7 @@ flowchart LR
 Both apps listen only on `127.0.0.1`; Caddy is the only public entry. Backup copies run on Render (API) and Streamlit Cloud (demo).
 
 ## How it works
-1. **Knowledge base:** 7 Markdown documents, split into 38 chunks by `##` section (`app/chunking.py`)
+1. **Knowledge base:** 7 Markdown documents, split into 39 chunks by `##` section (`app/chunking.py`), including a "Services We Offer (Overview)" section written in customer language so broad questions ("what do you offer?") have a chunk to match
 2. **Embeddings:** each chunk becomes a 1,536-number vector with OpenAI `text-embedding-3-small` (`app/embeddings.py`)
 3. **Storage and search:** chunks + vectors in Supabase (Postgres + pgvector); a SQL function `match_chunks` ranks them by cosine similarity (`sql/schema.sql`, `scripts/ingest.py`, `app/retrieval.py`)
 4. **Grounded answers:** the top 5 chunks go to Claude Haiku 5.5 as numbered sources; the answer cites them as [1], [2]... and the API returns **only the sources the answer actually cites**. Off-topic questions (very low similarity) hand over without calling Claude; when the documents don't contain what was asked, Claude adds a `[HANDOFF]` marker that the code removes and turns into `handoff: true` (`app/answer.py`)
@@ -73,16 +73,16 @@ Design decisions and trade-offs are logged in [`decisions.md`](decisions.md).
 Invalid input returns **422**; too many requests from one client return **429** (rate limit: 20/minute for `/chat`, 10/minute for `/qualify-lead`); if Claude, OpenAI or the database fail, the API returns a safe **503** message and the details go to the server logs only.
 
 ## Evaluation
-40 test questions with known answers (`eval/questions.json`): 20 answerable, 5 clear "no", 9 knowledge gaps, 4 multi-part, 2 off-topic. Run with `python -m eval.run_eval`.
+41 test questions with known answers (`eval/questions.json`): 21 answerable, 5 clear "no", 9 knowledge gaps, 4 multi-part, 2 off-topic. Run with `python -m eval.run_eval`.
 
 | Metric | Result |
 |---|---|
-| Retrieval hit (right chunk in top 5) | 28 / 29 (97%) |
-| Correct facts in the answer | 28 / 29 (97%) |
-| Correct handoff (only when it should) | 39 / 40 (98%) |
-| Median latency | 1.4 s |
+| Retrieval hit (right chunk in top 5) | 29 / 30 (97%) |
+| Correct facts in the answer | 29 / 30 (97%) |
+| Correct handoff (only when it should) | 40 / 41 (98%) |
+| Median latency | 1.3 s |
 
-**How the numbers improved:** baseline (threshold 0.35, top 3) refused two valid questions → threshold tuned to 0.20 from measured score distributions → top-5 retrieval fixed one multi-part miss. Adding the explicit `[HANDOFF]` signal first over-flagged clear "no" answers (handoff 37/40); a precise prompt rule fixed it. The one remaining miss (q35) is the retrieval limitation below: the bot now honestly flags the part it couldn't find. Every change was re-measured on the full set.
+**How the numbers improved:** baseline (threshold 0.35, top 3) refused two valid questions → threshold tuned to 0.20 from measured score distributions → top-5 retrieval fixed one multi-part miss. Adding the explicit `[HANDOFF]` signal first over-flagged clear "no" answers (handoff 37/40); a precise prompt rule fixed it. Live testing then found that a broad, chatty question ("hi… can I know about your services?") got no service list: no chunk listed all services, and the greeting words pulled the search toward contact chunks. Printing the search results confirmed it; adding an overview section in customer language fixed it, with no code change, and it became q41. The one remaining miss (q35) is the retrieval limitation below: the bot now honestly flags the part it couldn't find. Every change was re-measured on the full set.
 
 ## Cost and latency
 Every request is logged to a `request_logs` table (endpoint, latency, input/output tokens, estimated cost, outcome).
@@ -117,6 +117,7 @@ The code was reviewed with Claude Code as a **read-only reviewer** (no edit or s
 
 ## Limitations
 - One multi-part question (q35) still misses a source (one question = one search vector); candidate fix: split the question into parts before searching
+- Very chatty messages (greetings, names, small talk) pull the search vector toward contact chunks; the services overview now lands in the top 5, but only just. A stronger fix is query rewriting (an LLM turns the message into a clean search query first, at the cost of one extra call)
 - Evaluation uses keyword checks (cheap but brittle); next step is an LLM-as-judge
 - The `[HANDOFF]` signal relies on Claude following a prompt rule; the evaluation measures it on every change
 - The API is rate limited per client IP, but has no API key yet; all demo visitors share one counter because the demo calls the API from the server (next step: an API key for internal callers like n8n)
@@ -125,6 +126,5 @@ The code was reviewed with Claude Code as a **read-only reviewer** (no edit or s
 - VPS updates are manual (`git pull` + restart); the free backups have a cold start (up to ~1 minute)
 
 ## Status
-🚧 In progress: session 11 (polish)
+✅ Complete and live. Next: project 4, an n8n workflow that sends each new lead to `/qualify-lead`, saves it in Supabase, and asks the sales team to approve it in Slack.]
 
-Done: knowledge base, secure key handling, retrieval (Supabase + pgvector), grounded answers with citations and handoff, Pydantic lead extraction with tool calling, 40-question evaluation, FastAPI service with error handling, rate limiting and cost logging, tests, deployment (VPS with systemd + Caddy + HTTPS, plus Render and Streamlit Cloud as backups), Streamlit demo, uptime monitoring, architecture diagram, cited-sources-only and explicit gap handoffs.

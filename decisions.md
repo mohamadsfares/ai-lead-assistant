@@ -97,3 +97,10 @@ Each entry: what we decided, why, and what we rejected.
 ## D20: Frontend tests and a shared config (25 Nov 2026)
 - **Frontend tests:** Streamlit's `AppTest` runs the page without a browser; `requests` is faked, so the tests check the page loads, shows answers with sources, and handles a 429, for free and offline.
 - **Shared config:** the model name lives in one module (`app/config.py`) used by both `answer.py` and `lead.py`, so a model change can't leave one file behind.
+
+## D21: An overview chunk for broad questions
+**Problem:** "Can I know about your services?" got no list and a handoff. Each service lives in its own chunk, so no chunk matched a broad question; the closest was "Services We Do Not Offer".
+**Measured:** printing `search()` results showed the overview missing from the top 5 for a chatty question (the greeting words pulled the vector toward "Speaking With a Person").
+**Decision:** add a "Services We Offer (Overview)" section to `services.md`, written in customer language, using only facts already in the knowledge base. Fix content problems in the content: no code change, and one re-ingest updates all deployments.
+**Result:** the overview ranks #1 for "What services do you offer?" and #3 for the chatty version. Eval q41 added: 29/30 retrieval, 29/30 facts, 40/41 handoff, nothing broken.
+**Trade-off:** for very chatty messages the overview is only just in the top 5. A stronger fix is query rewriting (an LLM turns the message into a clean search query first), at the cost of an extra call per question.
